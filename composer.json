@@ -1,5 +1,5 @@
 {
-	"name": "brysalazar12/rbac",
+	"name": "brysalazar12/admin",
 	"description": "Laravel 5 Admin",
     "keywords": [
         "brysalazar12",
@@ -7,7 +7,7 @@
         "mirage",
         "admin"
     ],
-	"homepage": "https://github.com/brysalazar12/rbac",
+	"homepage": "https://github.com/brysalazar12/admin",
 	"license": "MIT",
     "authors": [
         {
@@ -20,7 +20,7 @@
 		"brysalazar12/laravel-rbac": "dev-master",
 		"brysalazar12/thememanager": "^1.0",
 		"brysalazar12/modulemanager": "^1.0",
-		"lavary/laravel-menu": "dev-master"
+		"lavary/laravel-menu": "^1.6"
     },
     "autoload": {
         "psr-4": {

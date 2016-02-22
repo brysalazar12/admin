@@ -82,6 +82,8 @@ class AdminServiceProvider extends ServiceProvider
 
 	}
 
+
+
 	protected function registerAdminCommands()
 	{
 		$this->app['command.admin.install'] = $this->app->share(function($app){
@@ -92,22 +94,7 @@ class AdminServiceProvider extends ServiceProvider
 
 	protected function mapRBACConfig()
 	{
-		$rbacConfigs = [
-			'routeUrlPrefix',
-			'rolesPerPage',
-			'routePermissionChecking',
-			'roleController',
-			'roleModel',
-			'permissionController',
-			'activeUserService',
-			'checkPermissionMiddleware'
-		];
-
-		$mapRBACConfig = [];
-		foreach($rbacConfigs as $rbacConfig) {
-			$mapRBACConfig['laravel-rbac.' . $rbacConfig] = config('admin.rbac.' . $rbacConfig);
-		}
-		config($mapRBACConfig);
+		config(['laravel-rbac'=>config('admin.rbac')]);
 	}
 
 	protected function registerRBACManager()

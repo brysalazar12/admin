@@ -36,6 +36,9 @@ class AdminInstallCommand extends Command
 			DB::table('user_role')->insert(['user_id'=>$userID,'role_id'=>$roleID]);
 
 			$this->call('vendor:publish');
+
+			// override the laravel-menu views
+			app('files')->copy(__DIR__ . '/stubs/views.php', config_path('laravel-menu/views.php'));
 		} else {
 			$this->error('Confirm password did not match. Please try again.');
 		}

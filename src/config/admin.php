@@ -1,6 +1,8 @@
 <?php
 
 return [
+	'title' => 'Admin Area',
+
 	// config for rbac
 	'rbac' => [
 		'routeUrlPrefix'            => 'admin', //route prefix for all package routes

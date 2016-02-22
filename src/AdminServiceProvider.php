@@ -5,19 +5,22 @@ use Illuminate\Foundation\AliasLoader;
 use Mirage\Admin\Events\CreateMenuEvent;
 use Mirage\Admin\Ext\Menu\Menu;
 use Mirage\Admin\Http\Middleware\AdminAfterMiddleware;
-//use Lavary\Menu\Collection;
-//use Illuminate\Support\ServiceProvider;
+use Mirage\ThemeManager\Helpers\Theme;
+use Mirage\ThemeManager\Helpers\Contracts\ThemeContract;
+use Illuminate\View\FileViewFinder;
+use Mirage\ModuleManager\Contracts\ModuleManagerContract;
+use Mirage\ModuleManager\ModuleManager;
+use Mirage\ModuleManager\Events\InstallModuleEvent;
+use Illuminate\Support\ServiceProvider;
 
 /**
  * Description of AdminServiceProvider
  *
  * @author Bryan Salazar
  */
-class AdminServiceProvider extends RbacServiceProvider
+class AdminServiceProvider extends ServiceProvider
 {
 	protected $providers = [
-		\Mirage\ThemeManager\ThemeManagerServiceProvider::class,
-		\Mirage\ModuleManager\ModuleManagerServiceProvider::class,
 		\Lavary\Menu\ServiceProvider::class,
 	];
 
@@ -31,8 +34,12 @@ class AdminServiceProvider extends RbacServiceProvider
 	public function boot()
 	{
 		$basePath = __DIR__ . '/';
-        $this->mergeConfigFrom($basePath . 'config/laravel-rbac.php', 'laravel-rbac');
+
+		$this->mapRBACConfig();
+
 		$this->loadTranslationsFrom($basePath . 'resources/lang', 'aliukevicius/laravelRbac');
+
+		$this->bootModuleManager();
 
         /** @var \Illuminate\Routing\Router $router */
         $router = $this->app->make('Illuminate\Routing\Router');
@@ -41,30 +48,142 @@ class AdminServiceProvider extends RbacServiceProvider
         $router->middleware('checkPermission', $this->app['config']->get('laravel-rbac.checkPermissionMiddleware'));
 
         $this->publishes([
-            $basePath . 'config/laravel-rbac.php' => config_path('laravel-rbac.php'),
+			$basePath . 'config/admin.php' => config_path('admin.php'),
 			$basePath . 'resources/themes' => resource_path('themes')
         ]);
 
         // get package routes
         require_once $basePath . 'Http/routes.php';
 
-//		$router = $this->app['router'];
-//		$router->middleware('adminAfter', AdminAfterMiddleware::class);
-
+		// create all menus
 		$dispatcher = app('events');
 		$this->defaultLeftMenu($dispatcher);
-		$this->createLeftMenu();
+		$this->createLeftMenu($dispatcher);
 		$this->createBreadcrumb($dispatcher);
 	}
 
 	public function register()
 	{
-		parent::register();
+		$this->mergeConfigFrom(__DIR__ . '/config/admin.php', 'admin');
+
 		$this->registerServiceProviders();
 		$this->app->singleton('menu', function($app) {
 		 	return new Menu();
 		});
+
+		$this->registerRBACManager();
+		$this->registerModuleManager();
+		$this->registerThemeManager();
 	}
+
+	protected function mapRBACConfig()
+	{
+		$rbacConfigs = [
+			'routeUrlPrefix',
+			'rolesPerPage',
+			'routePermissionChecking',
+			'roleController',
+			'roleModel',
+			'permissionController',
+			'activeUserService',
+			'checkPermissionMiddleware'
+		];
+
+		$mapRBACConfig = [];
+		foreach($rbacConfigs as $rbacConfig) {
+			$mapRBACConfig['laravel-rbac.' . $rbacConfig] = config('admin.rbac.' . $rbacConfig);
+		}
+		config($mapRBACConfig);
+	}
+
+	protected function registerRBACManager()
+	{
+        $this->app['command.laravel-rbac.create-migrations'] = $this->app->share(
+            function ($app) {
+                return $app['Aliukevicius\LaravelRbac\Console\Commands\CreateMigrationsCommand'];
+            }
+        );
+
+        $this->app['command.laravel-rbac.update-permission-list'] = $this->app->share(
+            function ($app) {
+                return $app['Aliukevicius\LaravelRbac\Console\Commands\UpdatePermissionListCommand'];
+            }
+        );
+
+        $this->app->singleton('Aliukevicius\LaravelRbac\ActiveUser', function($app){
+
+            return $app->make($this->app['config']->get('laravel-rbac.activeUserService'));
+        });
+
+        $this->app['facade.laravel-rbac.active-user'] = $this->app->share(function($app)
+        {
+            return $app->make('Aliukevicius\LaravelRbac\ActiveUser');
+        });
+
+        $this->commands(['command.laravel-rbac.create-migrations', 'command.laravel-rbac.update-permission-list']);
+	}
+
+	protected function registerThemeManager()
+	{
+		$this->app->singleton('theme',function($app){
+			return $app->make(ThemeContract::class);
+		});
+
+		$this->app->singleton(ThemeContract::class, function($app){
+			return new Theme($app);
+		});
+
+		$this->registerViewFinder();
+	}
+
+	protected function registerModuleManager()
+	{
+		$this->app->singleton(ModuleManagerContract::class, function($app){
+			return new ModuleManager($this->app);
+		});
+
+		$modules = config('admin.module.modules');
+
+		$moduleManager = app(ModuleManagerContract::class);
+		$moduleManager->setModuleBasePath(config('admin.module.basePath'));
+		$moduleManager->setBaseNamespace(config('admin.module.baseNamespace'));
+
+		foreach($modules as $moduleName => $isEnabled) {
+			$moduleManager->loadModule($moduleName, $isEnabled);
+		}
+	}
+
+	protected function bootModuleManager()
+	{
+		$moduleManager = $this->app[ModuleManagerContract::class];
+		$event = new InstallModuleEvent($moduleManager);
+		event('module.install', $event);
+
+		$moduleManager->installModule();
+	}
+
+    public function registerViewFinder()
+    {
+		$this->app->bind('view.finder',function($app){
+			$themeManager = $app['theme'];
+			$basePath = config('admin.theme.basePath');
+			$themeManager->setBasePath($basePath);
+			$themes = array_keys(config('admin.theme.themes'));
+			foreach($themes as $group => $theme) {
+				$themeManager->setThemes($group, $theme);
+			}
+			$currentGroup = config('admin.theme.current_group');
+			if(is_null($themeManager->getCurrentGroup()))
+				$themeManager->setCurrentGroup($currentGroup);
+			if(is_null($themeManager->getCurrentTheme($themeManager->getCurrentGroup()))) {
+				$currentTheme = config('admin.theme.current_theme');
+				$themeManager->set($currentTheme[$themeManager->getCurrentGroup()],
+						$themeManager->getCurrentGroup());
+			}
+			$paths = $themeManager->getAllAvailablePaths();
+			return new FileViewFinder($app['files'], $paths);
+		});
+    }
 
 	protected function registerServiceProviders()
 	{
@@ -75,12 +194,14 @@ class AdminServiceProvider extends RbacServiceProvider
 		AliasLoader::getInstance($this->facades);
 	}
 
-	protected function createLeftMenu()
+	protected function createLeftMenu($dispatcher)
 	{
-		\Menu::make('leftMenu',function($menu){
-			$event = new CreateMenuEvent($menu);
-			event('menu.left',$event);
-		})->sortBy('order');
+		$dispatcher->listen('composing: *',function(){
+			\Menu::make('leftMenu',function($menu){
+				$event = new CreateMenuEvent($menu);
+				event('menu.left',$event);
+			})->sortBy('order');
+		});
 	}
 
 	protected function createBreadcrumb($dispatcher)
@@ -105,5 +226,14 @@ class AdminServiceProvider extends RbacServiceProvider
 			$settings->add('Permissions','admin/permissions')->icon('fa fa-exclamation-circle')->data('order',3);
 
 		});
+	}
+
+	public function provides()
+	{
+		return [
+            'command.laravel-rbac.create-migrations',
+            'command.laravel-rbac.update-permission-list',
+            'Aliukevicius\LaravelRbac\ActiveUser',
+		];
 	}
 }

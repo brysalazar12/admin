@@ -29,7 +29,7 @@ class AdminInstallCommand extends Command
 		$this->email = $this->ask('Please enter email: ');
 		$this->password  = $this->ask('Please enter password: ');
 		$this->confirmPassword = $this->ask('Confirm password: ');
-		$this->role = $this->ask('What is you role?');
+		$this->role = $this->ask('What is your role?');
 		$this->roleDescription = $this->ask('What is role description?');
 
 		if($this->password === $this->confirmPassword) {

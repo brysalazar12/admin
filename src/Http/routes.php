@@ -17,7 +17,10 @@ Route::group(['prefix' => Config::get('laravel-rbac.routeUrlPrefix'), 'middlewar
         'uses' => Config::Get('laravel-rbac.permissionController') . '@savePermissions'
     ]);
 
-	Route::get('dashboard','Mirage\Admin\Http\Controllers\DashboardController@index');
+	Route::get('dashboard',[
+		'as' => 'dashboard.index',
+		'uses' => 'Mirage\Admin\Http\Controllers\DashboardController@index'
+	]);
 });
 
 Route::group(['prefix' => Config::get('laravel-rbac.routeUrlPrefix'),'middleware'=>['web']],function(){
@@ -27,5 +30,4 @@ Route::group(['prefix' => Config::get('laravel-rbac.routeUrlPrefix'),'middleware
 
 	Route::get('register','Mirage\Admin\Http\Controllers\AuthController@showRegistrationForm');
 	Route::post('register','Mirage\Admin\Http\Controllers\AuthController@register');
-//	Route::auth();
 });

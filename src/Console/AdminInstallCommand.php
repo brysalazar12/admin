@@ -3,6 +3,7 @@
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Input\InputOption;
 use Schema;
+use DB;
 /**
  * Description of AdminCommand
  *

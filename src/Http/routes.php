@@ -1,5 +1,5 @@
 <?php
-Route::group(['prefix' => Config::get('laravel-rbac.routeUrlPrefix'), 'middleware' => ['web','checkPermission']], function(){
+Route::group(['prefix' => Config::get('laravel-rbac.routeUrlPrefix'), 'middleware' => ['web','checkPermission','adminAuth']], function(){
     Route::resource('roles', Config::Get('laravel-rbac.roleController'));
 
     Route::get('permissions', [

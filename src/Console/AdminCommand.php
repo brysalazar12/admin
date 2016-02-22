@@ -12,7 +12,7 @@ class AdminCommand extends GeneratorCommand
 {
 	protected $currentStub;
 	protected $moduleName;
-	protected $name = 'admin:module';
+	protected $name = 'admin:install';
 
 	public function fire()
 	{

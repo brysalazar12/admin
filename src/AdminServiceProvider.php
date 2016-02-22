@@ -12,6 +12,7 @@ use Mirage\ModuleManager\Contracts\ModuleManagerContract;
 use Mirage\ModuleManager\ModuleManager;
 use Mirage\ModuleManager\Events\InstallModuleEvent;
 use Illuminate\Support\ServiceProvider;
+use Mirage\Admin\Http\Middleware\AdminAuthenticate;
 
 /**
  * Description of AdminServiceProvider
@@ -74,6 +75,9 @@ class AdminServiceProvider extends ServiceProvider
 		$this->registerRBACManager();
 		$this->registerModuleManager();
 		$this->registerThemeManager();
+
+		$router = $this->app['router'];
+		$router->middleware('adminAuth', AdminAuthenticate::class);
 	}
 
 	protected function mapRBACConfig()

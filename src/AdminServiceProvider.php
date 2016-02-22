@@ -75,9 +75,19 @@ class AdminServiceProvider extends ServiceProvider
 		$this->registerRBACManager();
 		$this->registerModuleManager();
 		$this->registerThemeManager();
+		$this->registerAdminCommands();
 
 		$router = $this->app['router'];
 		$router->middleware('adminAuth', AdminAuthenticate::class);
+
+	}
+
+	protected function registerAdminCommands()
+	{
+		$this->app['command.admin.install'] = $this->app->share(function($app){
+			return $app['Mirage\Admin\Console\AdminInstallCommand'];
+		});
+		$this->commands(['command.admin.install']);
 	}
 
 	protected function mapRBACConfig()
@@ -172,7 +182,9 @@ class AdminServiceProvider extends ServiceProvider
 			$themeManager = $app['theme'];
 			$basePath = config('admin.theme.basePath');
 			$themeManager->setBasePath($basePath);
-			$themes = array_keys(config('admin.theme.themes'));
+//			$themes = array_keys(config('admin.theme.themes'));
+			$themes = config('admin.theme.themes');
+//			dd($themes);
 			foreach($themes as $group => $theme) {
 				$themeManager->setThemes($group, $theme);
 			}

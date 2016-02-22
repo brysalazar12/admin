@@ -27,6 +27,11 @@ class AdminInstallCommand extends Command
 		$this->roleDescription = $this->ask('What is role description?');
 
 		if($this->password === $this->confirmPassword) {
+			if(DB::hasTable('permissions') || DB::hasTable('roles') || DB::hasTable('role_permission') || DB::hasTable('user_role')) {
+				$this->error('Please remove this tables [permissions, roles, role_permission, user_role]');
+				return;
+			}
+
 			$this->call('laravel-rbac:create-migrations');
 			$this->call('migrate');
 

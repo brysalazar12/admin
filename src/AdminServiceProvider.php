@@ -50,7 +50,8 @@ class AdminServiceProvider extends ServiceProvider
 
         $this->publishes([
 			$basePath . 'config/admin.php' => config_path('admin.php'),
-			$basePath . 'resources/themes' => resource_path('themes')
+			$basePath . 'resources/themes' => resource_path('themes'),
+			$basePath . 'resources/themes/admin/bootstrap/assets' => public_path('themes/admin/startbootstrap-sb-admin/assets')
         ]);
 
         // get package routes

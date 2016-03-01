@@ -20,9 +20,6 @@ class AuthController extends Controller
      *
      * @var string
      */
-    protected $redirectTo = 'admin/dashboard';
-
-	protected $redirectAfterLogout = 'admin/login';
 
     /**
      * Create a new authentication controller instance.
@@ -31,6 +28,8 @@ class AuthController extends Controller
      */
     public function __construct()
     {
+		$this->redirectTo = config('admin.rbac.routeUrlPrefix').'/dashboard';
+		$this->redirectAfterLogout = config('admin.rbac.routeUrlPrefix')."/login";
         $this->middleware('guest', ['except' => 'logout']);
     }
 

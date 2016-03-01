@@ -18,6 +18,10 @@
         {
             "type": "vcs",
             "url": "https://github.com/brysalazar12/laravel-rbac.git"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/brysalazar12/theme-admin-bootstrap.git"
         }
     ],
     "require": {
@@ -26,7 +30,8 @@
 		"brysalazar12/thememanager": "^1.0",
 		"brysalazar12/modulemanager": "^1.0",
 		"lavary/laravel-menu": "^1.6",
-		"brysalazar12/laravel-rbac": "^1.0"
+		"brysalazar12/laravel-rbac": "^1.0",
+		"brysalazar12/admin-theme-bootstrap": "^1.0"
     },
     "autoload": {
         "psr-4": {

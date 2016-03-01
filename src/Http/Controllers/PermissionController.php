@@ -4,6 +4,7 @@ use Aliukevicius\LaravelRbac\Services\PermissionService;
 use Aliukevicius\LaravelRbac\Services\RoleService;
 use Aliukevicius\LaravelRbac\Models\Permission;
 use Aliukevicius\LaravelRbac\Http\Controllers\Controller;
+use Mirage\Admin\Events\CreateMenuEvent;
 
 class PermissionController extends Controller {
 
@@ -29,6 +30,10 @@ class PermissionController extends Controller {
 
     public function index()
     {
+		app('events')->listen('menu.breadcrumb',function(CreateMenuEvent $event){
+			$event->add('Permissions',config('admin.rbac.routeUrlPrefix').'/permissions')->icon('fa fa-fw fa-exclamation-circle');
+		});
+
         $roles = $this->roleModel->all();
         $permissions = $this->permissionService->getGroupedByControllerPermissions();
 

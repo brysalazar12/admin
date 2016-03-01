@@ -5,6 +5,7 @@ return [
     'role.indexPageTitle'                 => 'Roles',
     'role.editPageTitle'                  => 'Edit ":name" role',
     'role.createPageTitle'                => 'Create a role',
+    'role.updatePageTitle'                => 'Update a role',
     'role.name'                           => 'Name',
     'role.id'                             => 'ID',
     'role.description'                    => 'Description',

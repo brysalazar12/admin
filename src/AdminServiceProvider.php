@@ -59,9 +59,9 @@ class AdminServiceProvider extends ServiceProvider
 
 		// create all menus
 		$dispatcher = app('events');
-		$this->defaultLeftMenu($dispatcher);
-		$this->createLeftMenu($dispatcher);
-		$this->createBreadcrumb($dispatcher);
+//		$dispatcher->listen('Illuminate\Auth\Events\Login',function() use($dispatcher) {
+			$this->adminOnly($dispatcher);
+//		});
 	}
 
 	public function register()
@@ -83,7 +83,14 @@ class AdminServiceProvider extends ServiceProvider
 
 	}
 
-
+	protected function adminOnly($dispatcher)
+	{
+		$this->defaultLeftMenu($dispatcher);
+		$this->defaultTopMenu($dispatcher);
+		$this->createLeftMenu($dispatcher);
+		$this->createTopMenu($dispatcher);
+		$this->createBreadcrumb($dispatcher);
+	}
 
 	protected function registerAdminCommands()
 	{
@@ -170,9 +177,7 @@ class AdminServiceProvider extends ServiceProvider
 			$themeManager = $app['theme'];
 			$basePath = config('admin.theme.basePath');
 			$themeManager->setBasePath($basePath);
-//			$themes = array_keys(config('admin.theme.themes'));
 			$themes = config('admin.theme.themes');
-//			dd($themes);
 			foreach($themes as $group => $theme) {
 				$themeManager->setThemes($group, $theme);
 			}
@@ -198,6 +203,16 @@ class AdminServiceProvider extends ServiceProvider
 		AliasLoader::getInstance($this->facades);
 	}
 
+	protected function createTopMenu($dispatcher)
+	{
+		$dispatcher->listen('composing: *',function(){
+			\Menu::make('topMenu',function($menu){
+				$event = new CreateMenuEvent($menu);
+				event('menu.top',$event);
+			})->sortBy('order');
+		});
+	}
+
 	protected function createLeftMenu($dispatcher)
 	{
 		$dispatcher->listen('composing: *',function(){
@@ -218,17 +233,30 @@ class AdminServiceProvider extends ServiceProvider
 		});
 	}
 
+	protected function defaultTopMenu($dispatcher)
+	{
+		$dispatcher->listen('menu.top',function(CreateMenuEvent $event) {
+			$email = 'User';
+			if(!empty(\Auth::user()))
+				$email = \Auth::user()->email;
+
+			$profile = $event->add($email)->icon('fa fa-fw fa-user')->data('order',50);
+			$profile->link->attr(['href'=>'javascript:;','data-toggle'=>'dropdown']);
+			$profile->add('Log Out',config('admin.rbac.routeUrlPrefix').'/logout')->icon('fa fa-fw fa-power-off')->data('order',30);
+		});
+
+	}
+
 	protected function defaultLeftMenu($dispatcher)
 	{
 		$dispatcher->listen('menu.left',function(CreateMenuEvent $event){
-			$event->add('Dashboard','admin/dashboard')->icon('fa fa-fw fa-dashboard')->data('order',10);
+			$event->add('Dashboard',config('admin.rbac.routeUrlPrefix').'/dashboard')->icon('fa fa-fw fa-dashboard')->data('order',10);
 			$settings = $event->add('Settings')->icon('fa fa-gear')->data('order',20)->data('target','settings');
 			$settings->link->attr(['href'=>'javascript:;','data-target'=>'#settings','data-toggle'=>'collapse','class'=>'collapsed']);
 			$settings->add('Roles','admin/roles')->icon('fa fa-group')->data('order',1);
-			$addRole = $settings->add('Add Role','admin/roles/create')->icon('fa fa-plus')->data('order',2);
+			$addRole = $settings->add('Add Role',config('admin.rbac.routeUrlPrefix').'/roles/create')->icon('fa fa-plus')->data('order',2);
 //			$addRole->divide();
-			$settings->add('Permissions','admin/permissions')->icon('fa fa-exclamation-circle')->data('order',3);
-
+			$settings->add('Permissions',config('admin.rbac.routeUrlPrefix').'/permissions')->icon('fa fa-exclamation-circle')->data('order',3);
 		});
 	}
 

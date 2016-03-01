@@ -23,7 +23,7 @@ class RoleController extends Controller
     public function index()
     {
 		app('events')->listen('menu.breadcrumb',function(CreateMenuEvent $event){
-			$event->add('Roles','admin/roles')->icon('fa fa-group');
+			$event->add('Roles',config('admin.rbac.routeUrlPrefix').'/roles')->icon('fa fa-group');
 		});
 
         $perPage = \Config::get('laravel-rbac.rolesPerPage', 10);
@@ -36,8 +36,8 @@ class RoleController extends Controller
     public function create()
     {
 		app('events')->listen('menu.breadcrumb',function(CreateMenuEvent $event){
-			$event->add('Roles','admin/roles')->icon('fa fa-group')->data('order',1);
-			$event->add('Add Role','admin/roles/create')->icon('fa fa-plus')->data('order',2);
+			$event->add('Roles',config('admin.rbac.routeUrlPrefix').'/roles')->icon('fa fa-group')->data('order',1);
+			$event->add('Add Role',config('admin.rbac.routeUrlPrefix').'/roles/create')->icon('fa fa-plus')->data('order',2);
 		});
         $formAction = $this->getRoleUrl('store');
 
@@ -58,6 +58,11 @@ class RoleController extends Controller
     public function edit($id)
     {
         $role = $this->roleModel->find($id);
+		$name = $role->name;
+		app('events')->listen('menu.breadcrumb',function(CreateMenuEvent $event) use($id, $name){
+			$event->add('Roles',config('admin.rbac.routeUrlPrefix').'/roles')->icon('fa fa-group')->data('order',1);
+			$event->add('Edit Role '.$name,config('admin.rbac.routeUrlPrefix').'/roles/' . $id . '/edit')->icon('fa fa-plus')->data('order',2);
+		});
 
         $formAction = $this->getRoleUrl('update', ['roles' => $id]);
 
